@@ -14,6 +14,11 @@ class Product(models.Model):
         string='Membership Duration',
         help="Membership duration from purchase date."
     )
+    membership_pricelist_id = fields.Many2one(
+        'product.pricelist',
+        string='Membership Pricelist',
+        help="Pricelist applied to members during their active membership period."
+    )
 
     # Remove the old fields and SQL constraint
     # membership_date_from = fields.Date(...)

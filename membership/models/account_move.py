@@ -7,6 +7,18 @@ from dateutil.relativedelta import relativedelta  # Added import
 class AccountMove(models.Model):
     _inherit = 'account.move'
 
+    def _post(self, soft=True):
+        """Override to assign membership pricelist after posting invoice"""
+        res = super()._post(soft)
+
+        for move in self.filtered(lambda m: m.move_type == 'out_invoice'):
+            for line in move.invoice_line_ids:
+                if line.product_id.membership_pricelist_id:
+                    line.partner_id.sudo().write({
+                        'property_product_pricelist': line.product_id.membership_pricelist_id.id
+                    })
+        return res
+
     def button_draft(self):
         # OVERRIDE to update the cancel date.
         res = super(AccountMove, self).button_draft()
@@ -119,3 +131,20 @@ class AccountMoveLine(models.Model):
             })
         self.env['membership.membership_line'].create(memberships_vals)
         return lines
+
+    def _create_membership_line(self):
+        """Update partner's pricelist when membership invoice is posted."""
+        res = super(AccountMoveLine, self)._create_membership_line()
+        for line in self:
+            # Check if the line is for a membership product with a pricelist
+            if (
+                line.product_id.membership
+                and line.product_id.membership_pricelist_id
+                and line.move_id.move_type == 'out_invoice'
+                and line.move_id.state == 'posted'
+            ):
+                # Update partner's pricelist using sudo() to bypass security rules
+                line.partner_id.sudo().write({
+                    'property_product_pricelist': line.product_id.membership_pricelist_id.id
+                })
+        return res

@@ -124,3 +124,13 @@ class Partner(models.Model):
             })
 
         return self.env['account.move'].create(invoice_vals_list)
+
+    def _cron_reset_expired_pricelists(self):
+        """Reset pricelist at midnight daily"""
+        expired = self.search([
+            ('membership_stop', '<', fields.Date.today()),
+            ('property_product_pricelist', '!=', self.env.ref('product.list0').id)
+        ])
+        expired.write({
+            'property_product_pricelist': self.env.ref('product.list0').id
+        })

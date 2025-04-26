@@ -9,5 +9,12 @@
             <field name="interval_type">days</field>
             <field name="numbercall">-1</field>
         </record>
+        <record id="ir_cron_reset_pricelist" model="ir.cron">
+            <field name="name">Reset Expired Membership Pricelists</field>
+            <field name="model_id" ref="model_res_partner"/>
+            <field name="code">model._cron_reset_expired_pricelists()</field>
+            <field name="interval_number">1</field>
+            <field name="interval_type">days</field>
+        </record>
     </data>
 </odoo>
